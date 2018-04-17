@@ -1,87 +1,97 @@
-﻿using System.Collections;
-using System.Collections.Generic;
-using UnityEngine;
+﻿using UnityEngine;
+using System.Collections;
 
 public class WormsTerrain : MonoBehaviour {
 
-SpriteRenderer sr;
-Collider2D col;
-	// Use this for initialization
-	void Start () 
-	{
-		sr = GetComponent<SpriteRenderer>();	
-		col = GetComponent<Collider2D>();
+	private SpriteRenderer sr;
+	private float widthWorld, heightWorld;
+	private int widthPixel, heightPixel;
+	private Color transp; 
+
+	// Start() de GroundController
+	void Start(){
+		sr = GetComponent<SpriteRenderer>(); 
+		// sr : variavel global de GroundController, ref para o SpriteRenderer de Ground
+		Texture2D tex = sr.sprite.texture;
+		// Resources.Load("nome_do_arquivo") carrega um arquivo localizado
+		// em Assets/Resources
+		Texture2D tex_clone = (Texture2D) Instantiate(tex);
+		// Criamos uma Texture2D clone de tex para nao alterarmos a imagem original 
+		sr.sprite = Sprite.Create(tex_clone, 
+		                          new Rect(0f, 0f, tex_clone.width, tex_clone.height),
+		                          new Vector2(0.5f, 0.5f), 100f);
+		transp = new Color(0f, 0f, 0f, 0f);
+		InitSpriteDimensions();
 	}
-	
-	// Update is called once per frame
-	void Update () 
-	{
+
+
+
+	private void InitSpriteDimensions() {
+		widthWorld = sr.bounds.size.x;
+		heightWorld = sr.bounds.size.y;
+		widthPixel = sr.sprite.texture.width;
+		heightPixel = sr.sprite.texture.height;
+	}
+
+	void Update () {
+		
 		Vector3 wPos = Camera.main.ScreenToWorldPoint(Input.mousePosition);
 		RaycastHit2D c = Physics2D.Raycast(wPos,wPos, 1f);
 		if(c.collider != null)
 		{
 			if(Input.GetMouseButtonDown(0))
 			{
-				Texture2D d = sr.sprite.texture;
-				Texture2D newTex = new Texture2D(d.width, d.height, d.format, false);
-				newTex.wrapMode = TextureWrapMode.Clamp;
-				newTex.alphaIsTransparency = true;
-				
-	            newTex.SetPixels(d.GetPixels());
-    	        newTex.Apply();
-				sr.sprite = Sprite.Create(newTex, new Rect(0.0f, 0.0f, newTex.width, newTex.height), sr.sprite.pivot, sr.sprite.pixelsPerUnit);
-			//	sr.material.mainTexture = newTex;
-				
-				// newTex.SetPixel((int)(localPos.x/sr.sprite.pixelsPerUnit),(int)(localPos.y/sr.sprite.pixelsPerUnit), Color.red);
-				// for(int i = 0; i < p.Length; i++)
-				// {
-				// 	if(p[i].a != 0)
-				// 		p[i] = Color.red;	 
-				// }
-				// p[index] =  Color.red;
-				
-				// newTex.SetPixels32(p);
-				 
-				Debug.Log(c.point);
-				Destroy(GetComponent<PolygonCollider2D>());
-				gameObject.AddComponent<PolygonCollider2D>();
+				CircleCollider2D coll = new GameObject("cc", typeof(CircleCollider2D)).GetComponent<CircleCollider2D>();
+				coll.radius = 0.1f;
+				coll.transform.position = wPos;
+				DestroyGround(coll);
+			}
+		}	
+	}
+
+	public void DestroyGround( CircleCollider2D cc ){
+		Debug.Log ("chamou DestroyGround");
+
+		V2int c = World2Pixel(cc.bounds.center.x, cc.bounds.center.y);
+		// c => centro do circulo de destruiçao em pixels
+		int r = Mathf.RoundToInt(cc.bounds.size.x*widthPixel/widthWorld);
+		// r => raio do circulo de destruiçao em 
+
+		int x, y, px, nx, py, ny, d;
+		
+		for (x = 0; x <= r; x++)
+		{
+			d = (int)Mathf.RoundToInt(Mathf.Sqrt(r * r - x * x));
+			
+			for (y = 0; y <= d; y++)
+			{
+				px = c.x + x;
+				nx = c.x - x;
+				py = c.y + y;
+				ny = c.y - y;
+
+				sr.sprite.texture.SetPixel(px, py, transp);
+				sr.sprite.texture.SetPixel(nx, py, transp);
+				sr.sprite.texture.SetPixel(px, ny, transp);
+				sr.sprite.texture.SetPixel(nx, ny, transp);
 			}
 		}
-		
-	}
-
-	int GetPixel(int x, int y, int largeur)
-	{
-		return y * largeur + x;
-	}
-
-	Vector2 GetPixel(int index, int largeur)
-	{
-		return new Vector2(index%largeur, index/largeur);
+		sr.sprite.texture.Apply();
+		Destroy(GetComponent<PolygonCollider2D>());
+		gameObject.AddComponent<PolygonCollider2D>();
 	}
 
 	
 
-	IEnumerator RefreshCollider(Collider2D col)
-     {
-         // Remember to call this with StartCoroutine
-         // This will make a collider that will trigger 
-         // it's OnEnterState again.
- 
-         col.enabled = false;
- 
-         // Wait a frame so the collider can update 
-         // it's status to false 
-         yield return null;
- 
-         // Enable
-         col.enabled = true;
- 
-         yield return null;
- 
-         // Force an update to the collider logic by nudging the 
-         // the transform but will ultimately not move the object
-         col.transform.localPosition += new Vector3(0.01f, 0, 0);
-         col.transform.localPosition += new Vector3(-0.01f, 0, 0);
-     }
+	private V2int World2Pixel(float x, float y) {
+		V2int v = new V2int();
+		
+		float dx = x-transform.position.x;
+		v.x = Mathf.RoundToInt(0.5f*widthPixel+ dx*widthPixel/widthWorld);
+		
+		float dy = y - transform.position.y;
+		v.y = Mathf.RoundToInt(0.5f * heightPixel + dy * heightPixel / heightWorld);
+		
+		return v;
+	}
 }
