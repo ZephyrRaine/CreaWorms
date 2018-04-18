@@ -1,6 +1,7 @@
 ﻿using UnityEngine;
 using System.Collections;
 using System.Collections.Generic;
+using UnityEngine.Events;
 
 public class WormsTerrain : MonoBehaviour {
 
@@ -11,8 +12,10 @@ public class WormsTerrain : MonoBehaviour {
 	public CustomRenderTexture customRenderTexture;
 	public Texture2D[] baseTerrain;
 	public Material material;
-	// Start() de GroundController
-	void Start()
+
+    public UnityEvent OnGenerated;
+    // Start() de GroundController
+    void Start()
 	{
 		Generate();
 	}
@@ -23,7 +26,7 @@ public class WormsTerrain : MonoBehaviour {
 		// customRenderTexture = new CustomRenderTexture(baseTerrain[0].width, baseTerrain[0].height);
 		// customRenderTexture.material = material;
 		customRenderTexture.material.SetTexture("_Tex", baseTerrain[Random.Range(0, baseTerrain.Length)]);
-		customRenderTexture.material.SetFloat("_noiseResolutionBlack", Random.Range(0.04f, 0.08f));
+		customRenderTexture.material.SetFloat("_noiseResolutionBlack", Random.Range(0.01f, 0.05f));
 		customRenderTexture.material.SetFloat("_noiseResolution", Random.Range(0.1f, 0.2f));
 		customRenderTexture.Update();
      	RenderTexture currentActiveRT = RenderTexture.active;
@@ -31,8 +34,9 @@ public class WormsTerrain : MonoBehaviour {
      	RenderTexture.active = customRenderTexture;
      	// // Create a new Texture2D and read the RenderTexture image into it
 		Texture2D readTexture = new Texture2D(customRenderTexture.width, customRenderTexture.height, TextureFormat.ARGB32, false);
-    	//  // Restorie previously active render texture
-		readTexture.ReadPixels(new Rect(0,0, customRenderTexture.width, customRenderTexture.height), 0, 0);
+        //  // Restorie previously active render texture
+        readTexture.wrapMode = TextureWrapMode.Clamp;
+        readTexture.ReadPixels(new Rect(0,0, customRenderTexture.width, customRenderTexture.height), 0, 0);
 
 		RenderTexture.active = currentActiveRT;
 		List<Vector2> edgePoints = LoadTerrainTypePoints(readTexture);
@@ -44,8 +48,8 @@ public class WormsTerrain : MonoBehaviour {
 				pixels[i] = new Color(0,0,0,0);
 		}
 		readTexture.SetPixels32(pixels);
-		readTexture = TextureFilter.Convolution(readTexture, TextureFilter.GaussianKernel(0.84089642f, 3, true), 1);
-		readTexture = TextureFilter.Convolution(readTexture, TextureFilter.DILATION_KERNEL, 1);
+		readTexture = TextureFilter.Convolution(readTexture, TextureFilter.GaussianKernel(0.4089642f, 2, true), 2);
+		readTexture = TextureFilter.Convolution(readTexture, TextureFilter.DILATION_KERNEL, 2);
 		readTexture.Apply();
 		sr = GetComponent<SpriteRenderer>();
 
@@ -57,11 +61,13 @@ public class WormsTerrain : MonoBehaviour {
 		// Criamos uma Texture2D clone de tex para nao alterarmos a imagem original
 		sr.sprite = Sprite.Create(tex_clone,
 		                          new Rect(0f, 0f, tex_clone.width, tex_clone.height),
-		                          new Vector2(0.5f, 0.5f), 100f);
+		                          new Vector2(0.5f, 0.5f), 50f);
 
 
 		InitSpriteDimensions();
-	}
+		if(OnGenerated != null)
+            OnGenerated.Invoke();
+    }
 
 	public List<Vector2> LoadTerrainTypePoints (Texture2D source, float threshold = 0.5f)
 	{
@@ -94,7 +100,7 @@ public class WormsTerrain : MonoBehaviour {
 	{
 		// Stack<Vector2> fgPoints = new Stack<Vector2>();
 		// fgPoints.Push(pos);
-		// texture.SetPixel((int)pos.x, (int)pos.y, Color.cyan);
+		// texture.SetPixel((int)pos.x, (int)pos.y, Color.cyan)3
 		while(fgPoints.Count != 0)
 		{
 			Vector2 point = fgPoints.Pop();
@@ -164,7 +170,8 @@ public class WormsTerrain : MonoBehaviour {
 				CircleCollider2D coll = new GameObject("cc", typeof(CircleCollider2D)).GetComponent<CircleCollider2D>();
 				coll.radius = 0.1f;
 				coll.transform.position = wPos;
-				DestroyGround(coll);
+                coll.isTrigger = true;
+                DestroyGround(coll);
 			}
 			if(Input.GetMouseButtonDown(1))
 			{
@@ -203,8 +210,8 @@ public class WormsTerrain : MonoBehaviour {
 
 		sr.sprite.texture.Apply();
 
-
-		Destroy(GetComponent<PolygonCollider2D>());
+        Destroy(cc.gameObject);
+        Destroy(GetComponent<PolygonCollider2D>());
 		gameObject.AddComponent<PolygonCollider2D>();
 	}
 

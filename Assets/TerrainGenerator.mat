@@ -19,12 +19,12 @@ Material:
     serializedVersion: 3
     m_TexEnvs:
     - _Tex:
-        m_Texture: {fileID: 2800000, guid: 010123a864acdef46a4f35f690462095, type: 3}
+        m_Texture: {fileID: 2800000, guid: 5fe684da22457e648a4c90a4be75d631, type: 3}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     m_Floats:
-    - _noiseResolution: 0.14103952
-    - _noiseResolutionBlack: 0.0681127
+    - _noiseResolution: 0.1937302
+    - _noiseResolutionBlack: 0.027699845
     - _noiseThreshold: 0
     m_Colors:
     - _Color: {r: 1, g: 1, b: 1, a: 1}
