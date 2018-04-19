@@ -17,18 +17,25 @@ public class WormsTerrain : MonoBehaviour {
     // Start() de GroundController
     void Start()
 	{
-		Generate();
+		StartCoroutine(Generate());
 	}
 
-	void Generate()
+	private void OnDrawGizmos()
+	{
+		Gizmos.color = new Color(1f,1f,0,0.1f);
+		Gizmos.DrawCube(transform.position, new Vector3(5.12f,10.24f,0.1f));	
+	}
+
+	IEnumerator Generate()
 	{
 		Debug.Log("StartingGeneration");
 		// customRenderTexture = new CustomRenderTexture(baseTerrain[0].width, baseTerrain[0].height);
 		// customRenderTexture.material = material;
 		customRenderTexture.material.SetTexture("_Tex", baseTerrain[Random.Range(0, baseTerrain.Length)]);
-		customRenderTexture.material.SetFloat("_noiseResolutionBlack", Random.Range(0.01f, 0.05f));
-		customRenderTexture.material.SetFloat("_noiseResolution", Random.Range(0.1f, 0.2f));
+		customRenderTexture.material.SetFloat("_noiseResolutionBlack", Random.Range(0.05f, 0.1f));
+		customRenderTexture.material.SetFloat("_noiseResolution", Random.Range(0.2f, 0.5f));
 		customRenderTexture.Update();
+		yield return new WaitForEndOfFrame();
      	RenderTexture currentActiveRT = RenderTexture.active;
      	// Set the supplied RenderTexture as the active one
      	RenderTexture.active = customRenderTexture;
@@ -48,7 +55,7 @@ public class WormsTerrain : MonoBehaviour {
 				pixels[i] = new Color(0,0,0,0);
 		}
 		readTexture.SetPixels32(pixels);
-		readTexture = TextureFilter.Convolution(readTexture, TextureFilter.GaussianKernel(0.4089642f, 2, true), 2);
+		//readTexture = TextureFilter.Convolution(readTexture, TextureFilter.GaussianKernel(0.4089642f, 2, true), 2);
 		readTexture = TextureFilter.Convolution(readTexture, TextureFilter.DILATION_KERNEL, 2);
 		readTexture.Apply();
 		sr = GetComponent<SpriteRenderer>();
@@ -58,15 +65,16 @@ public class WormsTerrain : MonoBehaviour {
 		// Resources.Load("nome_do_arquivo") carrega um arquivo localizado
 		// em Assets/Resources
 		Texture2D tex_clone = (Texture2D) Instantiate(tex);
+		tex_clone.filterMode = FilterMode.Point;
 		// Criamos uma Texture2D clone de tex para nao alterarmos a imagem original
 		sr.sprite = Sprite.Create(tex_clone,
 		                          new Rect(0f, 0f, tex_clone.width, tex_clone.height),
 		                          new Vector2(0.5f, 0.5f), 50f);
 
 
-		InitSpriteDimensions();
-		if(OnGenerated != null)
-            OnGenerated.Invoke();
+		yield return InitSpriteDimensions();
+
+
     }
 
 	public List<Vector2> LoadTerrainTypePoints (Texture2D source, float threshold = 0.5f)
@@ -121,7 +129,7 @@ public class WormsTerrain : MonoBehaviour {
 			
 			while(x1 < texture.width && texture.GetPixel(x1,y) == color)
 			{
-			 	texture.SetPixel(x1, y, Color.red);
+			 	texture.SetPixel(x1, y, Color.white);
 			 	if(!spanAbove && y > 0 && texture.GetPixel(x1, y-1) == color)
 			 	{
 			 		fgPoints.Push(new Vector2(x1, y-1));
@@ -149,7 +157,7 @@ public class WormsTerrain : MonoBehaviour {
 
 
 
-	private void InitSpriteDimensions() {
+	private IEnumerator InitSpriteDimensions() {
 		widthWorld = sr.bounds.size.x;
 		heightWorld = sr.bounds.size.y;
 		widthPixel = sr.sprite.texture.width;
@@ -157,6 +165,9 @@ public class WormsTerrain : MonoBehaviour {
 		
 		Destroy(GetComponent<PolygonCollider2D>());
 		gameObject.AddComponent<PolygonCollider2D>();
+		yield return new WaitForEndOfFrame();
+		if(OnGenerated != null)
+			OnGenerated.Invoke();
 	}
 
 	void Update () {
@@ -165,18 +176,18 @@ public class WormsTerrain : MonoBehaviour {
 		RaycastHit2D c = Physics2D.Raycast(wPos,wPos, 1f);
 		if(c.collider != null)
 		{
-			if(Input.GetMouseButtonDown(0))
-			{
-				CircleCollider2D coll = new GameObject("cc", typeof(CircleCollider2D)).GetComponent<CircleCollider2D>();
-				coll.radius = 0.1f;
-				coll.transform.position = wPos;
-                coll.isTrigger = true;
-                DestroyGround(coll);
-			}
-			if(Input.GetMouseButtonDown(1))
-			{
-				Generate();
-			}
+			// if(Input.GetMouseButtonDown(0))
+			// {
+			// 	CircleCollider2D coll = new GameObject("cc", typeof(CircleCollider2D)).GetComponent<CircleCollider2D>();
+			// 	coll.radius = 0.1f;
+			// 	coll.transform.position = wPos;
+            //     coll.isTrigger = true;
+            //     DestroyGround(coll);
+			// }
+			// if(Input.GetMouseButtonDown(1))
+			// {
+			// 	StartCoroutine(Generate());
+			// }
 		}
 	}
 
@@ -210,9 +221,8 @@ public class WormsTerrain : MonoBehaviour {
 
 		sr.sprite.texture.Apply();
 
-        Destroy(cc.gameObject);
-        Destroy(GetComponent<PolygonCollider2D>());
-		gameObject.AddComponent<PolygonCollider2D>();
+        //Destroy(cc.gameObject);
+		StartCoroutine(InitSpriteDimensions());
 	}
 
 
