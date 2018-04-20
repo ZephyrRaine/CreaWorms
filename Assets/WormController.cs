@@ -30,43 +30,64 @@ public class WormController : MonoBehaviour
     }
     Vector3 pos;
         Vector2 screenPos;
-    
+    bool active;
+    public void Activate(bool a)
+    {
+        rb.simulated = a;
+        active = a;
+    }
+    private void Update()
+    {
+        if (active)
+        {
+
+            if (Input.GetMouseButtonDown(1))
+            {
+                Time.timeScale = 0.5f;
+            }
+
+            if (Input.GetMouseButtonUp(1))
+            {
+                Time.timeScale = 1f;
+                Vector3 direction = (weapon.GetChild(0).position - transform.position).normalized;
+                rb.AddForce((direction * jumpSpeed), ForceMode2D.Impulse);
+            }
+
+        }
+    }
 	private void FixedUpdate()
 	{
-        Vector2 v = Vector2.right * Input.GetAxis("Horizontal") * _speed;
-		
-		// if(v.x > 0)
-        //     transform.localScale = Vector3.one;
-		// else if(v.x < 0)
-        //     transform.localScale = new Vector3(-1f, 1f, 1f);
-        rb.AddForce(v);
+        if (active)
+        {
 
-        Vector3 difference = Camera.main.ScreenToWorldPoint(Input.mousePosition) - weapon.position;
-        difference.Normalize();
-        float rotation_z = Mathf.Atan2(difference.y, difference.x) * Mathf.Rad2Deg;
-        Quaternion q = Quaternion.Euler(0f, 0f, rotation_z);
-        weapon.rotation = Quaternion.RotateTowards(weapon.rotation, q, rotSpeed);
-        // pos = (Vector2)Camera.main.ScreenToWorldPoint(Input.mousePosition);
-        // Debug.Log(pos);
-        // Vector3 vv = weapon.eulerAngles;
-        // vv.z = Mathf.Clamp(vv.z, -15f, 45f);
-        // weapon.eulerAngles = vv;
+            Vector2 v = Vector2.right * Input.GetAxis("Horizontal") * _speed;
 
-        if(Input.GetMouseButtonDown(1))
-		{
-            Vector3 direction = (weapon.GetChild(0).position-transform.position).normalized;
-            rb.AddForce((direction * jumpSpeed), ForceMode2D.Impulse);
+            // if(v.x > 0)
+            //     transform.localScale = Vector3.one;
+            // else if(v.x < 0)
+            //     transform.localScale = new Vector3(-1f, 1f, 1f);
+            rb.AddForce(v);
+
+            Vector3 difference = Camera.main.ScreenToWorldPoint(Input.mousePosition) - weapon.position;
+            difference.Normalize();
+            float rotation_z = Mathf.Atan2(difference.y, difference.x) * Mathf.Rad2Deg;
+            Quaternion q = Quaternion.Euler(0f, 0f, rotation_z);
+            weapon.rotation = Quaternion.RotateTowards(weapon.rotation, q, rotSpeed);
+            // pos = (Vector2)Camera.main.ScreenToWorldPoint(Input.mousePosition);
+            // Debug.Log(pos);
+            // Vector3 vv = weapon.eulerAngles;
+            // vv.z = Mathf.Clamp(vv.z, -15f, 45f);
+            // weapon.eulerAngles = vv;
+
         }
-
-		if(Input.GetAxis("Fire1") > 0f)
-		{
-			
-		}
     }
 
     private void LateUpdate()
     {
-        weapon.GetComponent<Rigidbody2D>().MovePosition(transform.position);
+        if(active)
+        {
+            weapon.GetComponent<Rigidbody2D>().MovePosition(transform.position);
+        }
     } 
 
 }

@@ -2,9 +2,10 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-public class MeshMaker : MonoBehaviour {
-
-	public void Generate (GameObject go) 
+public class MeshMaker : MonoBehaviour 
+{
+    public Material meshMat;
+    public void Generate (GameObject go) 
 	{
 		for(int i = transform.childCount -1; i>=0; i--)
 		{
@@ -26,7 +27,7 @@ public class MeshMaker : MonoBehaviour {
 				vertices[j] = new Vector3(actual.x, actual.y, 0);
 				uv[j] = actual;
 			}
-			ctm.InitMesh(points, vertices, uv);
+			ctm.InitMesh(points, vertices, uv, meshMat);
 		 }
     
          //Render thing

@@ -1,0 +1,21 @@
+fileFormatVersion: 2
+guid: cfe40dcc9ff322f44ba69f42497e7797
+timeCreated: 1524173843
+licenseType: Free
+TrueTypeFontImporter:
+  serializedVersion: 4
+  fontSize: 16
+  forceTextureCase: -2
+  characterSpacing: 0
+  characterPadding: 1
+  includeFontData: 1
+  fontName: Gamja Flower
+  fontNames:
+  - Gamja Flower
+  fallbackFontReferences: []
+  customCharacters: 
+  fontRenderingMode: 0
+  ascentCalculationMode: 1
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 

@@ -5,7 +5,7 @@ using System.Collections.Generic;
  [RequireComponent(typeof(MeshRenderer))]
  public class ColliderToMesh : MonoBehaviour {
 	 
-     public void InitMesh(Vector2[] points, Vector3[] vertices, Vector2[] uv) 
+     public void InitMesh(Vector2[] points, Vector3[] vertices, Vector2[] uv, Material mat) 
 	 {
         MeshFilter mf = GetComponent<MeshFilter>();
         Mesh mesh = new Mesh();
@@ -17,9 +17,10 @@ using System.Collections.Generic;
         List<Vector3> normals = new List<Vector3>();
         foreach(Vector2 point in vertices)
         {
-            normals.Add(Vector3.forward);
+            normals.Add(Vector3.back);
         }
         mesh.SetNormals(normals);
+        GetComponent<MeshRenderer>().material = mat;
         mf.mesh = mesh;
      }
  }

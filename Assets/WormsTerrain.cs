@@ -5,19 +5,28 @@ using UnityEngine.Events;
 
 public class WormsTerrain : MonoBehaviour {
 
-	private SpriteRenderer sr;
+    SpriteRenderer _sr;
+    private SpriteRenderer sr
+	{
+		get
+		{
+			if(_sr == null)
+                _sr = GetComponent<SpriteRenderer>();
+            return _sr;
+        }
+	}
 	private float widthWorld, heightWorld;
 	private int widthPixel, heightPixel;
 	private Color transp;
 	public CustomRenderTexture customRenderTexture;
 	public Texture2D[] baseTerrain;
 	public Material material;
-
+    public TMPro.TMP_Text text;
     public UnityEvent OnGenerated;
     // Start() de GroundController
     void Start()
 	{
-		StartCoroutine(Generate());
+		//StartCoroutine(Generate());
 	}
 
 	private void OnDrawGizmos()
@@ -26,16 +35,19 @@ public class WormsTerrain : MonoBehaviour {
 		Gizmos.DrawCube(transform.position, new Vector3(5.12f,10.24f,0.1f));	
 	}
 
-	IEnumerator Generate()
+	public IEnumerator Generate()
 	{
-		Debug.Log("StartingGeneration");
-		// customRenderTexture = new CustomRenderTexture(baseTerrain[0].width, baseTerrain[0].height);
-		// customRenderTexture.material = material;
-		customRenderTexture.material.SetTexture("_Tex", baseTerrain[Random.Range(0, baseTerrain.Length)]);
+		if(text == null)
+            text = FindObjectOfType<TMPro.TMP_Text>();
+        text.text = "Starting Generation";
+        // customRenderTexture = new CustomRenderTexture(baseTerrain[0].width, baseTerrain[0].height);
+        // customRenderTexture.material = material;
+        customRenderTexture.material.SetTexture("_Tex", baseTerrain[Random.Range(0, baseTerrain.Length)]);
 		customRenderTexture.material.SetFloat("_noiseResolutionBlack", Random.Range(0.05f, 0.1f));
 		customRenderTexture.material.SetFloat("_noiseResolution", Random.Range(0.2f, 0.5f));
 		customRenderTexture.Update();
 		yield return new WaitForEndOfFrame();
+        text.text = "Shader generation done";
      	RenderTexture currentActiveRT = RenderTexture.active;
      	// Set the supplied RenderTexture as the active one
      	RenderTexture.active = customRenderTexture;
@@ -47,18 +59,25 @@ public class WormsTerrain : MonoBehaviour {
 
 		RenderTexture.active = currentActiveRT;
 		List<Vector2> edgePoints = LoadTerrainTypePoints(readTexture);
-		FloodFill(readTexture, Vector2.zero, new Stack<Vector2>(edgePoints), new Color(0,0,0,0));
-		Color32[] pixels = readTexture.GetPixels32();
+        text.text = "Starting flood fill";
+        yield return FloodFill(readTexture, Vector2.zero, new Stack<Vector2>(edgePoints), new Color(0,0,0,0));
+        text.text = "Flood fill done";
+        Color32[] pixels = readTexture.GetPixels32();
 		for(int i = 0; i < pixels.Length; i++)
 		{
 			if(pixels[i] == new Color(1,1,0,1))
 				pixels[i] = new Color(0,0,0,0);
 		}
-		readTexture.SetPixels32(pixels);
-		//readTexture = TextureFilter.Convolution(readTexture, TextureFilter.GaussianKernel(0.4089642f, 2, true), 2);
-		readTexture = TextureFilter.Convolution(readTexture, TextureFilter.DILATION_KERNEL, 2);
+        yield return null;
+        text.text = "Starting convolution";
+        readTexture.SetPixels32(pixels);
+		readTexture = TextureFilter.Convolution(readTexture, TextureFilter.GaussianKernel(0.84089642f, 2, true), 2);
+        yield return null;
+		readTexture = TextureFilter.Convolution(readTexture, TextureFilter.DILATION_KERNEL, 5);
+        yield return null;
+        text.text = "Convolution done";
+		// readTexture = TextureFilter.SobelFilter(readTexture);
 		readTexture.Apply();
-		sr = GetComponent<SpriteRenderer>();
 
 		// sr : variavel global de GroundController, ref para o SpriteRenderer de Ground
 		Texture2D tex = readTexture;
@@ -72,9 +91,16 @@ public class WormsTerrain : MonoBehaviour {
 		                          new Vector2(0.5f, 0.5f), 50f);
 
 
+        text.text = "Initiating collider";
 		yield return InitSpriteDimensions();
+		
+		BoxCollider2D b = gameObject.AddComponent<BoxCollider2D>();
+        b.isTrigger = true;
 
-
+        text.text = "";
+		
+		if(OnGenerated != null)
+			OnGenerated.Invoke();
     }
 
 	public List<Vector2> LoadTerrainTypePoints (Texture2D source, float threshold = 0.5f)
@@ -104,12 +130,13 @@ public class WormsTerrain : MonoBehaviour {
     	return fgPoints;
 	}
 
-	public void FloodFill(Texture2D texture, Vector2 pos, Stack<Vector2> fgPoints, Color color)
+	IEnumerator FloodFill(Texture2D texture, Vector2 pos, Stack<Vector2> fgPoints, Color color)
 	{
-		// Stack<Vector2> fgPoints = new Stack<Vector2>();
-		// fgPoints.Push(pos);
-		// texture.SetPixel((int)pos.x, (int)pos.y, Color.cyan)3
-		while(fgPoints.Count != 0)
+        // Stack<Vector2> fgPoints = new Stack<Vector2>();
+        // fgPoints.Push(pos);
+        // texture.SetPixel((int)pos.x, (int)pos.y, Color.cyan)3
+        float timer = 0f;
+        while(fgPoints.Count != 0)
 		{
 			Vector2 point = fgPoints.Pop();
 			int x = (int)point.x;
@@ -150,7 +177,13 @@ public class WormsTerrain : MonoBehaviour {
 					spanBelow = false;
 				}
 				x1++;
-			}
+            }
+            timer += Time.deltaTime;
+			if(timer >= 0.16f)
+			{
+	            yield return null;
+                timer = 0f;
+            }
 		}
 	}
 
@@ -165,10 +198,21 @@ public class WormsTerrain : MonoBehaviour {
 		
 		Destroy(GetComponent<PolygonCollider2D>());
 		gameObject.AddComponent<PolygonCollider2D>();
+
+
+        
 		yield return new WaitForEndOfFrame();
-		if(OnGenerated != null)
-			OnGenerated.Invoke();
 	}
+
+    bool hasBeenTriggered = false;
+    private void OnTriggerEnter2D(Collider2D other)
+	{
+		if(!hasBeenTriggered && other.GetComponent<WormController>() != null)
+		{
+            transform.parent.GetComponent<TerrainInstantiator>().RequestTerrain();
+            hasBeenTriggered = true;
+        }
+    }
 
 	void Update () {
 
