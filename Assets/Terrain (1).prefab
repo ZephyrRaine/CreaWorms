@@ -131,13 +131,12 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 8af63ac9b9811e649bf42fb7fced8608, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  customRenderTexture: {fileID: 8600000, guid: 14901c7a610a48c4c98f96eeeeffdbea, type: 2}
+  customRenderTexture: {fileID: 8600000, guid: 3cbb886a042d2b2479be6283a84903c8, type: 2}
   baseTerrain:
   - {fileID: 2800000, guid: 010123a864acdef46a4f35f690462095, type: 3}
   - {fileID: 2800000, guid: 5fe684da22457e648a4c90a4be75d631, type: 3}
   - {fileID: 2800000, guid: 0dd6e3584a789b847937343e3bf909a0, type: 3}
   material: {fileID: 0}
-  text: {fileID: 0}
   OnGenerated:
     m_PersistentCalls:
       m_Calls:

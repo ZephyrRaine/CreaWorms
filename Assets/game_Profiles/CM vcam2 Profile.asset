@@ -13,9 +13,37 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   settings:
   - {fileID: 114794802832916492}
-  - {fileID: 114436724254195882}
-  - {fileID: 114482651251925458}
---- !u!114 &114436724254195882
+  - {fileID: 114165181312083304}
+  - {fileID: 114054056441334496}
+  - {fileID: 114674135767855724}
+--- !u!114 &114054056441334496
+MonoBehaviour:
+  m_ObjectHideFlags: 3
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d65e486e4de6e5448a8fbb43dc8756a0, type: 3}
+  m_Name: Grain
+  m_EditorClassIdentifier: 
+  active: 1
+  enabled:
+    overrideState: 1
+    value: 1
+  colored:
+    overrideState: 1
+    value: 1
+  intensity:
+    overrideState: 1
+    value: 1
+  size:
+    overrideState: 1
+    value: 1
+  lumContrib:
+    overrideState: 1
+    value: 0.8
+--- !u!114 &114165181312083304
 MonoBehaviour:
   m_ObjectHideFlags: 3
   m_PrefabParentObject: {fileID: 0}
@@ -26,17 +54,17 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: b94fcd11afffcb142908bfcb1e261fba, type: 3}
   m_Name: MotionBlur
   m_EditorClassIdentifier: 
-  active: 1
+  active: 0
   enabled:
     overrideState: 1
     value: 1
   shutterAngle:
     overrideState: 1
-    value: 100
+    value: 270
   sampleCount:
     overrideState: 1
-    value: 32
---- !u!114 &114482651251925458
+    value: 10
+--- !u!114 &114674135767855724
 MonoBehaviour:
   m_ObjectHideFlags: 3
   m_PrefabParentObject: {fileID: 0}
@@ -53,10 +81,10 @@ MonoBehaviour:
     value: 1
   spectralLut:
     overrideState: 1
-    value: {fileID: 2800000, guid: 4a8f054acfbd08043a931cd22760758d, type: 3}
+    value: {fileID: 2800000, guid: 318cbcd94840f1d48aca4d86234dc2e7, type: 3}
   intensity:
     overrideState: 1
-    value: 1
+    value: 0.5
   fastMode:
     overrideState: 1
     value: 0
@@ -77,7 +105,7 @@ MonoBehaviour:
     value: 1
   intensity:
     overrideState: 1
-    value: 3.12
+    value: 1.5
   threshold:
     overrideState: 1
     value: 0.87

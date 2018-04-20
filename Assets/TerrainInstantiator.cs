@@ -5,54 +5,91 @@ using UnityEngine;
 
 public class TerrainInstantiator : MonoBehaviour {
     public GameObject prefab;
-
+    public TMPro.TMP_Text tt;
+    public GameObject mer;
 	private void Start()
 	{
-		
-        for (int i = 0; i < 1; i++)
-		{
-            RequestTerrain();
-        }
-        StartCoroutine(InstantiateRequested());
+        StartCoroutine(firsttime());
     }
+
+    public IEnumerator firsttime()
+    {
+        for(int i = 0; i < 3; i++)
+        {
+            yield return InstantiateRequested();
+        }
+        Finished();
+    }
+    bool start = true;
     public IEnumerator AddTerrain()
 	{
         WormsTerrain t = Instantiate(prefab, transform.position + Vector3.zero + Vector3.up * 10.24f * transform.childCount, Quaternion.identity, transform).GetComponent<WormsTerrain>();
-        t.OnGenerated.AddListener(Finished);
+        if(start)
+        {
+            // t.OnGenerated.AddListener(Finished);
+        }
         yield return t.Generate();
     }
     WormController[] wc;
+    int currentActive;
     public void Finished()
 	{
-		requestCount--;
-        Debug.Log(requestCount);
-        if(requestCount == 0)
+        Debug.Log("OKOK");
+        if(start)
 		{
+            tt.text = "";
             wc = FindObjectsOfType<WormController>();
-            wc[0].Activate(true);
-            DestroyTerrain.Instantiate(wc[0].transform.position, 0.15f);
+            currentActive = 0;
+            start = false;
+            waitForInput = true;
         }
     }
 	private void Update()
 	{
-		if(Input.GetKeyDown(KeyCode.T))
-		{
-            wc[0].Activate(false);
-            wc[1].Activate(true);
-            DestroyTerrain.Instantiate(wc[1].transform.position, 0.15f);
+		if(waitForInput)
+        {
+            tt.text = "Player " + currentActive + " press mouse";
+            if(Input.GetMouseButtonDown(0))
+            {
+                tt.text = "";
+                waitForInput = false;
+                FinishSwitch();
+            }
         }
-	}
+
+
+    }
+
+    public void Switch()
+    {
+        wc[currentActive].Activate(false);
+        Debug.Log(currentActive);
+        
+        currentActive = currentActive ^ 1;
+        Invoke("Activate", 0.5f);
+        if(currentActive == 0)
+            mer.transform.position += Vector3.up*10f;
+    }
+    bool waitForInput = false;
+    void Activate()
+    {
+        waitForInput = true;
+    }
+
+    void FinishSwitch()
+    {
+        Debug.Log(currentActive);
+        wc[currentActive].Activate(true);
+        Invoke("Switch", 7f);
+    }
     int requestCount;
     internal void RequestTerrain()
     {
-        requestCount++;
+        StartCoroutine(InstantiateRequested());
     }
 
 	public IEnumerator InstantiateRequested()
 	{
-        for (int i = 0; i < requestCount; i++)
-		{
-            yield return AddTerrain();
-        }
+        yield return AddTerrain();
     }
 }

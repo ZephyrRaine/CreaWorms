@@ -1,6 +1,7 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.Rendering.PostProcessing;
 
 public class WormController : MonoBehaviour 
 {
@@ -11,16 +12,17 @@ public class WormController : MonoBehaviour
     public Transform weapon;
 
     public float speedForage;
+
+    public PostProcessVolume pp;
     private void Start()
 	{
         rb = GetComponent<Rigidbody2D>();
-        weapon.GetComponentInChildren<DestroyTerrain>().creused += MoveTowards;
     }
 
-    void MoveTowards(Vector3 pos)
+    void MoveTowards(Vector3 pos, float ratio)
     {
         Vector3 direction = (pos-transform.position).normalized;
-        rb.AddForce((direction * speedForage * (direction.y+1f) * Time.deltaTime), ForceMode2D.Impulse);
+        rb.AddForce((direction * speedForage * ratio * (direction.y+ratio) * Time.deltaTime), ForceMode2D.Impulse);
     }
 
     private void OnDrawGizmos()
@@ -31,23 +33,34 @@ public class WormController : MonoBehaviour
     Vector3 pos;
         Vector2 screenPos;
     bool active;
+    
+    void TriggerSimulation()
+    {
+        rb.simulated = active;
+        if(active)
+            weapon.GetComponentInChildren<DestroyTerrain>().creused += MoveTowards;
+        else
+            weapon.GetComponentInChildren<DestroyTerrain>().creused -= MoveTowards;
+    }
     public void Activate(bool a)
     {
-        rb.simulated = a;
         active = a;
+        Time.timeScale = 1f;
+        TriggerSimulation();
     }
     private void Update()
     {
-        if (active)
+        if (active && rb.simulated)
         {
-
             if (Input.GetMouseButtonDown(1))
             {
                 Time.timeScale = 0.5f;
+                pp.weight = 1f;
             }
 
             if (Input.GetMouseButtonUp(1))
             {
+                pp.weight = 0f;
                 Time.timeScale = 1f;
                 Vector3 direction = (weapon.GetChild(0).position - transform.position).normalized;
                 rb.AddForce((direction * jumpSpeed), ForceMode2D.Impulse);
@@ -57,7 +70,7 @@ public class WormController : MonoBehaviour
     }
 	private void FixedUpdate()
 	{
-        if (active)
+        if (active && rb.simulated)
         {
 
             Vector2 v = Vector2.right * Input.GetAxis("Horizontal") * _speed;

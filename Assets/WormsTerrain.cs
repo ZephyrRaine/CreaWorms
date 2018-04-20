@@ -21,7 +21,6 @@ public class WormsTerrain : MonoBehaviour {
 	public CustomRenderTexture customRenderTexture;
 	public Texture2D[] baseTerrain;
 	public Material material;
-    public TMPro.TMP_Text text;
     public UnityEvent OnGenerated;
     // Start() de GroundController
     void Start()
@@ -37,9 +36,7 @@ public class WormsTerrain : MonoBehaviour {
 
 	public IEnumerator Generate()
 	{
-		if(text == null)
-            text = FindObjectOfType<TMPro.TMP_Text>();
-        text.text = "Starting Generation";
+		
         // customRenderTexture = new CustomRenderTexture(baseTerrain[0].width, baseTerrain[0].height);
         // customRenderTexture.material = material;
         customRenderTexture.material.SetTexture("_Tex", baseTerrain[Random.Range(0, baseTerrain.Length)]);
@@ -47,7 +44,6 @@ public class WormsTerrain : MonoBehaviour {
 		customRenderTexture.material.SetFloat("_noiseResolution", Random.Range(0.2f, 0.5f));
 		customRenderTexture.Update();
 		yield return new WaitForEndOfFrame();
-        text.text = "Shader generation done";
      	RenderTexture currentActiveRT = RenderTexture.active;
      	// Set the supplied RenderTexture as the active one
      	RenderTexture.active = customRenderTexture;
@@ -59,9 +55,7 @@ public class WormsTerrain : MonoBehaviour {
 
 		RenderTexture.active = currentActiveRT;
 		List<Vector2> edgePoints = LoadTerrainTypePoints(readTexture);
-        text.text = "Starting flood fill";
         yield return FloodFill(readTexture, Vector2.zero, new Stack<Vector2>(edgePoints), new Color(0,0,0,0));
-        text.text = "Flood fill done";
         Color32[] pixels = readTexture.GetPixels32();
 		for(int i = 0; i < pixels.Length; i++)
 		{
@@ -69,13 +63,11 @@ public class WormsTerrain : MonoBehaviour {
 				pixels[i] = new Color(0,0,0,0);
 		}
         yield return null;
-        text.text = "Starting convolution";
         readTexture.SetPixels32(pixels);
-		readTexture = TextureFilter.Convolution(readTexture, TextureFilter.GaussianKernel(0.84089642f, 2, true), 2);
-        yield return null;
-		readTexture = TextureFilter.Convolution(readTexture, TextureFilter.DILATION_KERNEL, 5);
-        yield return null;
-        text.text = "Convolution done";
+		//readTexture = TextureFilter.Convolution(readTexture, TextureFilter.GaussianKernel(0.84089642f, 2, true), 2);
+        //yield return null;
+		//readTexture = TextureFilter.Convolution(readTexture, TextureFilter.DILATION_KERNEL, 5);
+        //yield return null;
 		// readTexture = TextureFilter.SobelFilter(readTexture);
 		readTexture.Apply();
 
@@ -91,13 +83,11 @@ public class WormsTerrain : MonoBehaviour {
 		                          new Vector2(0.5f, 0.5f), 50f);
 
 
-        text.text = "Initiating collider";
 		yield return InitSpriteDimensions();
 		
 		BoxCollider2D b = gameObject.AddComponent<BoxCollider2D>();
         b.isTrigger = true;
 
-        text.text = "";
 		
 		if(OnGenerated != null)
 			OnGenerated.Invoke();
@@ -235,8 +225,8 @@ public class WormsTerrain : MonoBehaviour {
 		}
 	}
 
-	public void DestroyGround( CircleCollider2D cc ){
-		Debug.Log ("chamou DestroyGround");
+	public bool DestroyGround( CircleCollider2D cc )
+	{
 
 		V2int c = World2Pixel(cc.bounds.center.x, cc.bounds.center.y);
 		// c => centro do circulo de destruiçao em pixels
@@ -244,7 +234,7 @@ public class WormsTerrain : MonoBehaviour {
 		// r => raio do circulo de destruiçao em
 
 		int x, y, px, nx, py, ny, d;
-
+		int hard = 0;
 		for (x = 0; x <= r; x++)
 		{
 			d = (int)Mathf.RoundToInt(Mathf.Sqrt(r * r - x * x));
@@ -255,11 +245,22 @@ public class WormsTerrain : MonoBehaviour {
 				nx = c.x - x;
 				py = c.y + y;
 				ny = c.y - y;
+				Color cf = sr.sprite.texture.GetPixel(px, py);
+				hard = hard + (cf == Color.red?1:(cf==Color.white?-1:0));
+				cf = sr.sprite.texture.GetPixel(nx, py);
+				hard = hard + (cf == Color.red?1:(cf==Color.white?-1:0));
+				cf = sr.sprite.texture.GetPixel(px, ny);
+				hard = hard + (cf == Color.red?1:(cf==Color.white?-1:0));
+				cf = sr.sprite.texture.GetPixel(nx, ny);
+				hard = hard + (cf == Color.red?1:(cf==Color.white?-1:0));
+
 
 				sr.sprite.texture.SetPixel(px, py, transp);
 				sr.sprite.texture.SetPixel(nx, py, transp);
 				sr.sprite.texture.SetPixel(px, ny, transp);
 				sr.sprite.texture.SetPixel(nx, ny, transp);
+
+
 			}
 		}
 
@@ -267,6 +268,8 @@ public class WormsTerrain : MonoBehaviour {
 
         //Destroy(cc.gameObject);
 		StartCoroutine(InitSpriteDimensions());
+
+		return hard > 0;
 	}
 
 
